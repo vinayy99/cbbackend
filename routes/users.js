@@ -1,5 +1,6 @@
 import express from 'express';
 import { pool } from '../database/config.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -79,4 +80,23 @@ router.patch('/:id/availability', async (req, res) => {
 });
 
 export default router;
+
+// Update own profile
+router.patch('/me', authMiddleware, async (req, res) => {
+  const { name, bio, avatar, links } = req.body; // links as array of strings
+  try {
+    await pool.execute(
+      'UPDATE users SET name = COALESCE(?, name), bio = COALESCE(?, bio), avatar = COALESCE(?, avatar), links_json = COALESCE(?, links_json), updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [name ?? null, bio ?? null, avatar ?? null, links ? JSON.stringify(links) : null, req.userId]
+    );
+    const [rows] = await pool.execute('SELECT id, name, email, bio, avatar, links_json, available FROM users WHERE id = ?', [req.userId]);
+    const user = rows[0];
+    user.links = user.links_json ? JSON.parse(user.links_json) : [];
+    delete user.links_json;
+    res.json(user);
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 

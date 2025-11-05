@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
   password VARCHAR(255) NOT NULL,
   bio TEXT,
   avatar VARCHAR(500),
+  links_json TEXT,
   available BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -57,6 +58,21 @@ CREATE TABLE IF NOT EXISTS project_members (
   UNIQUE KEY unique_project_member (project_id, user_id)
 );
 
+-- Project Applications Table
+CREATE TABLE IF NOT EXISTS project_applications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  project_id INT NOT NULL,
+  user_id INT NOT NULL,
+  message TEXT,
+  status ENUM('pending','accepted','declined') DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_project_id (project_id),
+  INDEX idx_user_id (user_id)
+);
+
 -- Skill Swaps Table
 CREATE TABLE IF NOT EXISTS skill_swaps (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -72,6 +88,45 @@ CREATE TABLE IF NOT EXISTS skill_swaps (
   FOREIGN KEY (to_user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_from_user (from_user_id),
   INDEX idx_to_user (to_user_id)
+);
+
+-- Skill Swap Messages (threaded chat)
+CREATE TABLE IF NOT EXISTS skill_swap_messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  swap_id INT NOT NULL,
+  sender_id INT NOT NULL,
+  message TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (swap_id) REFERENCES skill_swaps(id) ON DELETE CASCADE,
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_swap_id (swap_id)
+);
+
+-- Skill Swap Status History (timeline)
+CREATE TABLE IF NOT EXISTS skill_swap_status_history (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  swap_id INT NOT NULL,
+  status ENUM('pending','accepted','declined') NOT NULL,
+  changed_by INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (swap_id) REFERENCES skill_swaps(id) ON DELETE CASCADE,
+  FOREIGN KEY (changed_by) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_swap_hist (swap_id)
+);
+
+-- Notifications
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  body TEXT,
+  link VARCHAR(255),
+  read_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_user_id (user_id),
+  INDEX idx_unread (user_id, read_at)
 );
 
 -- Insert Sample Data (Optional)

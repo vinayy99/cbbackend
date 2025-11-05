@@ -6,6 +6,8 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import projectRoutes from './routes/projects.js';
 import skillSwapRoutes from './routes/skillSwaps.js';
+import applicationRoutes from './routes/applications.js';
+import notificationRoutes from './routes/notifications.js';
 
 dotenv.config();
 
@@ -25,6 +27,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/skill-swaps', skillSwapRoutes);
+app.use('/api', applicationRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
