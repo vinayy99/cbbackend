@@ -44,7 +44,7 @@ router.post('/register', async (req, res) => {
 
     const token = jwt.sign(
       { userId, email },
-      process.env.JWT_SECRET || "secret",
+      process.env.JWT_SECRET || "secret", // ✅ SAME SECRET
       { expiresIn: "7d" }
     );
 
@@ -79,7 +79,11 @@ router.post('/login', async (req, res) => {
     user.skills = skillRows.map(s => s.skill);
     delete user.password;
 
-    const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET || "secret", { expiresIn: "7d" });
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET || "secret", // ✅ SAME SECRET
+      { expiresIn: "7d" }
+    );
 
     res.json({ user, token });
   } catch (e) {
