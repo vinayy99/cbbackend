@@ -5,6 +5,9 @@ dotenv.config();
 
 const shouldUseSsl = String(process.env.DB_SSL || '').toLowerCase() === 'true';
 
+// ⚠️ FIX: Replace escaped '\\n' characters in the CA string with actual newlines.
+const caCertificate = process.env.DB_CA ? process.env.DB_CA.replace(/\\n/g, '\n') : null;
+
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT ? Number(process.env.DB_PORT) : undefined,
@@ -17,8 +20,8 @@ const dbConfig = {
   // Aiven requires SSL. Enable via env DB_SSL=true. Optionally pass CA via DB_CA.
   ssl: shouldUseSsl
     ? (
-        process.env.DB_CA
-          ? { rejectUnauthorized: true, ca: process.env.DB_CA }
+        caCertificate
+          ? { rejectUnauthorized: true, ca: caCertificate } // Use the fixed string here
           : { rejectUnauthorized: true }
       )
     : undefined,
@@ -33,8 +36,8 @@ export async function testConnection() {
     connection.release();
     return true;
   } catch (error) {
+    // Log the full error object for better debugging if connection fails for other reasons
     console.error('Database connection failed:', error.message);
     return false;
   }
 }
-
