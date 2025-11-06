@@ -15,11 +15,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// ✅ FIXED CORS COMPLETELY
+// ✅ Correct CORS — works on Render + local
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://collabmate1.onrender.com'
+    process.env.FRONTEND_URL
   ],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -29,16 +29,16 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Log Requests
+// Request logging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
-// ✅ DB Test
+// DB check
 testConnection();
 
-// ✅ ROUTES (NO DOUBLE /api/api ISSUE)
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
@@ -46,21 +46,23 @@ app.use('/api/skill-swaps', skillSwapRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-// ✅ Health Check
+// Health Check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-// ✅ 404
+// 404
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 
-// ✅ Error Handler
+// Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack || err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// ✅ Start Normally (Local only)
+// Run server locally (Render ignores this)
 if (!process.env.VERCEL) {
-  app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
+  app.listen(PORT, () =>
+    console.log(`✅ Server running at http://localhost:${PORT}`)
+  );
 }
 
 export default app;
