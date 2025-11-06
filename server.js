@@ -15,16 +15,18 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// ✅ Correct CORS — works on Render + local
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    process.env.FRONTEND_URL
-  ],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-}));
+// ✅ FIXED CORS FOR BOTH LOCAL + DEPLOYED FRONTEND
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://collabmate1.onrender.com", // ✅ your frontend URL
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
