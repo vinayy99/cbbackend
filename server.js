@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+
 import { testConnection } from './database/config.js';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
@@ -14,55 +15,52 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// ✅ Updated CORS
+// ✅ FIXED CORS COMPLETELY
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: [
+    'http://localhost:3000',
+    'https://collabmate1.onrender.com'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Request logging middleware
+// ✅ Log Requests
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
-// Test database connection
+// ✅ DB Test
 testConnection();
 
-// Routes
+// ✅ ROUTES (NO DOUBLE /api/api ISSUE)
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/skill-swaps', skillSwapRoutes);
-app.use('/api', applicationRoutes);
+app.use('/api/applications', applicationRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
-});
+// ✅ Health Check
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-// 404 handler
-app.use((req, res, next) => {
-  console.log(`404 - Route not found: ${req.method} ${req.path}`);
-  res.status(404).json({ error: 'Route not found' });
-});
+// ✅ 404
+app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 
-// Error handler (last)
+// ✅ Error Handler
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(err.status || 500).json({ error: 'Internal server error' });
+  console.error(err.stack || err);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
-// Export for Vercel serverless
-export default app;
-
-// Local dev server
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-  });
+// ✅ Start Normally (Local only)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
 }
+
+export default app;
