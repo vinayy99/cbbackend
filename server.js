@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-
 import { testConnection } from './database/config.js';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
@@ -15,13 +14,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// ✅ FIXED CORS FOR BOTH LOCAL + DEPLOYED FRONTEND
+// ✅ CORS Configuration (Dynamic)
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://collabmate1.onrender.com", // ✅ your frontend URL
-    ],
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -37,10 +33,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// DB check
+// Test DB connection
 testConnection();
 
-// API Routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
@@ -48,23 +44,23 @@ app.use('/api/skill-swaps', skillSwapRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-// Health Check
+// Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-// 404
+// 404 handler
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 
-// Error Handler
+// Global error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack || err);
-  res.status(500).json({ error: 'Internal server error' });
+  console.error('❌ ERROR:', err.message);
+  res.status(500).json({ error: 'Internal server error', details: err.message });
 });
 
-// Run server locally (Render ignores this)
+// Start server locally
 if (!process.env.VERCEL) {
-  app.listen(PORT, () =>
-    console.log(`✅ Server running at http://localhost:${PORT}`)
-  );
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
+  });
 }
 
 export default app;
